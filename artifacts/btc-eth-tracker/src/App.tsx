@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { AutoDcaPage } from "./features/auto-dca/pages/AutoDcaPage";
 import { apiGetJson } from "./lib/httpClient";
 import { Capacitor } from "@capacitor/core";
 import { FileSaver } from "./lib/FileSaver";
@@ -179,9 +180,9 @@ function indodaxTransactionId(t: IndodaxPreviewTransaction): string {
   return `indodax:${t.tradeId || `${t.orderId}-${t.date}`}`;
 }
 
-type TabType = "BTC" | "ETH" | "Dashboard";
+type TabType = "BTC" | "ETH" | "Dashboard" | "AutoDCA";
 
-const tabs: TabType[] = ["BTC", "ETH", "Dashboard"];
+const tabs: TabType[] = ["BTC", "ETH", "Dashboard", "AutoDCA"];
 
 const BTC_COLOR = "#F7931A";
 const ETH_COLOR = "#627EEA";
@@ -2434,7 +2435,8 @@ export default function App() {
                   {tab === "BTC" && <BitcoinIcon size={14} />}
                   {tab === "ETH" && <EthereumIcon size={14} />}
                   {tab === "Dashboard" && <TrendUpIcon size={14} />}
-                  {tab}
+                  {tab === "AutoDCA" && <CodeIcon size={14} />}
+                  {tab === "AutoDCA" ? "Auto DCA" : tab}
                 </button>
               );
             })}
@@ -2457,6 +2459,11 @@ export default function App() {
         )}
         {activeTab === "Dashboard" && (
           <DashboardTab transactions={transactions} onImport={setTransactions} />
+        )}
+        {activeTab === "AutoDCA" && (
+          <div className="fade-in">
+            <AutoDcaPage />
+          </div>
         )}
       </main>
 

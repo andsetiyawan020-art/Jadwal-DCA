@@ -42,6 +42,27 @@ _Describe the high-level user-facing capabilities of this app once they exist._
 
 _Populate as you build — explicit user instructions worth remembering across sessions._
 
+## Fitur Auto DCA
+
+Ditambahkan sebagai tab ke-4 ("Auto DCA") di navigasi utama. Arsitektur feature-based:
+
+```
+src/features/auto-dca/
+  types/index.ts              — Semua TypeScript types (DcaSchedule, DcaHistoryEntry, dll)
+  services/AutoDcaStorage.ts  — Service localStorage (tidak langsung di komponen)
+  utils/index.ts              — Format Rp, parse input, hitung nextRun, validasi
+  hooks/useAutoDca.ts         — Custom hook utama untuk state management
+  components/
+    DashboardSummary.tsx      — Ringkasan statistik (jadwal aktif, total/hari/minggu/bulan)
+    ScheduleCard.tsx          — Kartu satu jadwal DCA
+    ScheduleForm.tsx          — Form buat/edit jadwal + validasi guardrails
+    HistoryTable.tsx          — Tabel riwayat eksekusi
+    SettingsPanel.tsx         — API key + mode + notifikasi + guardrails
+  pages/AutoDcaPage.tsx       — Halaman utama (sub-tab Jadwal/Riwayat/Pengaturan)
+```
+
+LocalStorage keys yang digunakan: `auto_dca_schedules`, `auto_dca_history`, `auto_dca_settings`, `auto_dca_guardrails`.
+
 ## Android build (Capacitor)
 
 - The real Capacitor Android project is `artifacts/btc-eth-tracker/android` (appId `com.andisetiyawan.btcethtracker`). The root-level `./android` folder is a stale leftover with only icon resources (no Gradle files) — ignore it.

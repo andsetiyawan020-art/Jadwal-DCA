@@ -1,0 +1,223 @@
+Saya memiliki project Vite + React + TypeScript bernama "Aset Coin Investment Tracker". Saya ingin MENAMBAHKAN fitur Auto DCA ke project ini, BUKAN membuat project baru.
+
+PENTING:
+- Pertahankan seluruh fitur yang sudah ada.
+- Jangan mengubah UI yang tidak berkaitan.
+- Jangan menghapus fitur Manual DCA yang sudah ada.
+- Jangan mengubah struktur project secara besar-besaran.
+- Tambahkan fitur baru secara modular agar mudah dirawat.
+
+====================================================
+FITUR BARU : AUTO DCA
+====================================================
+
+Buat modul baru bernama Auto DCA.
+
+Fitur Auto DCA terdiri dari:
+
+1. Membuat Jadwal Auto DCA
+- Pilih Coin (BTC / ETH)
+- Nominal pembelian (Rp)
+- Tanggal mulai
+- Jam eksekusi
+- Frekuensi:
+  - Harian
+  - Mingguan
+  - Bulanan
+- Aktif / Nonaktif
+- Edit jadwal
+- Hapus jadwal
+
+====================================================
+
+2. Daftar Jadwal
+
+Tampilkan seluruh jadwal Auto DCA.
+
+Setiap kartu menampilkan:
+
+- Coin
+- Nominal
+- Frekuensi
+- Jadwal berikutnya
+- Status Aktif / Nonaktif
+- Tombol Edit
+- Tombol Hapus
+
+====================================================
+
+3. Dashboard Auto DCA
+
+Tambahkan ringkasan:
+
+- Total Jadwal Aktif
+- Total Nominal per Hari
+- Total Nominal per Minggu
+- Total Nominal per Bulan
+- Jadwal Berikutnya
+
+====================================================
+
+4. Riwayat Auto DCA
+
+Buat halaman riwayat.
+
+Kolom:
+
+- Waktu
+- Coin
+- Nominal
+- Status
+
+Status:
+
+- SUCCESS
+- FAILED
+- CANCELLED
+- SKIPPED
+
+====================================================
+
+5. Pengaturan Auto DCA
+
+Halaman pengaturan berisi:
+
+API KEY
+
+Secret Key
+
+Mode Auto DCA
+
+Notifikasi
+
+Auto Retry
+
+====================================================
+
+6. Guardrails
+
+Tambahkan pengaturan:
+
+- Total beli maksimal per hari (Rp)
+- Maksimal pembelian satu transaksi (Rp)
+- Jeda minimum antar transaksi (Menit)
+
+Gunakan format ribuan otomatis saat mengetik.
+
+Tetapi nilai yang disimpan harus tetap angka murni.
+
+Contoh:
+
+Tampilan:
+10.000
+
+Storage:
+10000
+
+====================================================
+
+7. Validasi
+
+Tidak boleh:
+
+Nominal <= 0
+
+Tanggal di masa lalu
+
+Jam yang sudah lewat jika tanggal hari ini
+
+Nominal melebihi Guardrails
+
+====================================================
+
+8. Local Storage
+
+Untuk sementara semua data disimpan di Local Storage.
+
+Buat service khusus.
+
+Contoh:
+
+AutoDcaStorage.ts
+
+Jangan menyimpan langsung di Component.
+
+====================================================
+
+9. Struktur Folder
+
+Gunakan Feature Based Architecture.
+
+Contoh:
+
+features/
+
+auto-dca/
+
+components/
+
+pages/
+
+hooks/
+
+services/
+
+types/
+
+utils/
+
+====================================================
+
+10. TypeScript
+
+Seluruh kode harus menggunakan TypeScript.
+
+Tidak boleh menggunakan any jika bisa dihindari.
+
+====================================================
+
+11. UI
+
+Ikuti tema aplikasi saat ini.
+
+Gunakan warna, font, dan style yang sudah ada.
+
+Jangan membuat tampilan yang berbeda sendiri.
+
+====================================================
+
+12. Kualitas Kode
+
+Gunakan:
+
+React Hook
+
+Custom Hook bila diperlukan
+
+Reusable Component
+
+Utility Function
+
+Type yang jelas
+
+Kode modular
+
+====================================================
+
+13. PENTING
+
+Jangan menghapus kode yang sudah ada.
+
+Jangan mengubah fitur lama.
+
+Jangan membuat project baru.
+
+Jangan mengganti framework.
+
+Tambahkan fitur Auto DCA secara bertahap agar seluruh fitur lama tetap berfungsi.
+
+Sebelum mulai mengubah kode:
+1. Analisis struktur project terlebih dahulu.
+2. Jelaskan file apa saja yang akan ditambahkan atau diubah.
+3. Pastikan perubahan seminimal mungkin.
+4. Setelah analisis selesai, baru implementasikan fitur Auto DCA secara bertahap.
