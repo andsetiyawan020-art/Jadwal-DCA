@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Aset Coin</string>
+    <string name="title_activity_main">Aset Coin</string>
+    <string name="package_name">com.andisetiyawan.btcethtracker</string>
+    <string name="custom_url_scheme">com.andisetiyawan.btcethtracker</string>
+</resources>

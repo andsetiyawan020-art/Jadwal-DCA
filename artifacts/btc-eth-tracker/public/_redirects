@@ -1,0 +1,6 @@
+# Proxy APIs through Netlify to avoid browser CORS/CSP restrictions
+/indodax/*  https://indodax.com/:splat  200
+/binance/*  https://api.binance.com/:splat  200
+
+# SPA fallback — all routes serve index.html
+/*  /index.html  200

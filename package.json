@@ -1,0 +1,26 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "workspaces": [
+    "artifacts/*",
+    "lib/*",
+    "scripts"
+  ],
+  "scripts": {
+    "build": "npm run typecheck && npm run --workspaces --if-present build",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "npm run typecheck:libs && npm run --workspaces --if-present typecheck"
+  },
+  "private": true,
+  "devDependencies": {
+    "prettier": "^3.8.4",
+    "typescript": "~5.9.3"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}

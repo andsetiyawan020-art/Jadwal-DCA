@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- internal files dir — Directory.Documents (Capacitor) -->
+    <files-path name="documents" path="." />
+    <!-- cache dir — Directory.Cache (Capacitor) -->
+    <cache-path name="my_cache_images" path="." />
+    <!-- external storage -->
+    <external-path name="my_images" path="." />
+    <!-- external cache -->
+    <external-cache-path name="external_cache" path="." />
+</paths>

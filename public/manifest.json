@@ -1,0 +1,13 @@
+{
+  "name": "BTC & ETH Tracker",
+  "short_name": "BTC ETH",
+  "description": "Tracker harga Bitcoin dan Ethereum live dari Indodax",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#22c55e",
+  "icons": [
+    {"src": "/icon-192.png","sizes": "192x192","type": "image/png"},
+    {"src": "/icon-512.png","sizes": "512x512","type": "image/png"}
+  ]
+}

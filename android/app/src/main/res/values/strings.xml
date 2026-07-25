@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BTC &amp; ETH Tracker</string>
+    <string name="title_activity_main">BTC &amp; ETH Tracker</string>
+    <string name="package_name">com.gentz.btctracker</string>
+    <string name="custom_url_scheme">com.gentz.btctracker</string>
+</resources>
