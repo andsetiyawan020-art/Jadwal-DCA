@@ -1,10 +1,4 @@
-import type { Coin, DcaGuardrails, DcaSchedule, Frequency } from "../types";
-
-export const FREQUENCY_LABELS: Record<Frequency, string> = {
-  DAILY: "Harian",
-  WEEKLY: "Mingguan",
-  MONTHLY: "Bulanan",
-};
+import type { Coin, DcaGuardrails, DcaSchedule } from "../types";
 
 export const COIN_LABELS: Record<Coin, string> = {
   BTC: "₿ Bitcoin",
@@ -64,10 +58,25 @@ export function generateDcaId(): string {
 }
 
 /**
+ * Label interval hari untuk tampilan.
+ * Contoh: 1 → "Setiap hari", 7 → "Setiap 7 hari"
+ */
+export function intervalLabel(intervalDays: number): string {
+  if (intervalDays === 1) return "Setiap hari";
+  return `Setiap ${intervalDays} hari`;
+}
+
+/**
  * Hitung waktu eksekusi berikutnya dari sebuah jadwal.
- * Kembalikan Date atau null bila tidak bisa dihitung.
+ *
+ * Algoritma:
+ * 1. Ambil tanggal startDate dan jam executeTime.
+ * 2. Hitung berapa siklus (intervalDays) sudah berlalu sejak startDate.
+ * 3. next = startDate + ceil(elapsed/intervalDays) * intervalDays (hari pertama setelah now).
+ * 4. Jika candidate (next) hari ini tapi jamnya sudah lewat → maju 1 interval lagi.
  */
 export function computeNextRun(schedule: DcaSchedule): Date | null {
+  const interval = Math.max(1, Math.floor(schedule.intervalDays));
   const [hh, mm] = schedule.executeTime.split(":").map(Number);
   if (isNaN(hh) || isNaN(mm)) return null;
 
@@ -76,7 +85,6 @@ export function computeNextRun(schedule: DcaSchedule): Date | null {
 
   const now = new Date();
 
-  /** Candidate: today (or a given base date) at execute-time */
   function atTime(base: Date): Date {
     const d = new Date(base);
     d.setHours(hh, mm, 0, 0);
@@ -89,34 +97,25 @@ export function computeNextRun(schedule: DcaSchedule): Date | null {
     return r;
   }
 
-  function addMonths(d: Date, n: number): Date {
-    const r = new Date(d);
-    r.setMonth(r.getMonth() + n);
-    return r;
+  // First candidate: startDate at executeTime
+  let candidate = atTime(start);
+
+  // If start is in the future, that's the next run
+  if (candidate > now) return candidate;
+
+  // Advance by interval until we exceed now
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const msInterval = interval * msPerDay;
+  const elapsed = now.getTime() - candidate.getTime();
+  const cycles = Math.floor(elapsed / msInterval);
+  candidate = addDays(candidate, (cycles + 1) * interval);
+
+  // Safety: should already be > now, but verify
+  while (candidate <= now) {
+    candidate = addDays(candidate, interval);
   }
 
-  if (schedule.frequency === "DAILY") {
-    const candidate = atTime(now);
-    return candidate > now ? candidate : atTime(addDays(now, 1));
-  }
-
-  if (schedule.frequency === "WEEKLY") {
-    const startDow = start.getDay();
-    const todayDow = now.getDay();
-    let daysAhead = (startDow - todayDow + 7) % 7;
-    let candidate = atTime(addDays(now, daysAhead));
-    if (candidate <= now) candidate = addDays(candidate, 7);
-    return candidate;
-  }
-
-  if (schedule.frequency === "MONTHLY") {
-    const dayOfMonth = start.getDate();
-    const tryThisMonth = new Date(now.getFullYear(), now.getMonth(), dayOfMonth, hh, mm, 0, 0);
-    if (tryThisMonth > now) return tryThisMonth;
-    return addMonths(tryThisMonth, 1);
-  }
-
-  return null;
+  return candidate;
 }
 
 /** Format nextRun untuk tampilan singkat */
@@ -131,45 +130,26 @@ export function formatNextRun(schedule: DcaSchedule): string {
 }
 
 /**
- * Hitung total nominal per hari dari semua jadwal aktif.
- * MONTHLY dianggap 30 hari, WEEKLY 7 hari, DAILY 1 hari.
+ * Hitung rata-rata total nominal per hari dari semua jadwal aktif.
+ * interval 1 → nominal/hari, interval 7 → nominal/7/hari, dst.
  */
 export function computeDailyTotal(schedules: DcaSchedule[]): number {
   return schedules
     .filter((s) => s.status === "ACTIVE")
-    .reduce((sum, s) => {
-      if (s.frequency === "DAILY") return sum + s.nominal;
-      if (s.frequency === "WEEKLY") return sum + s.nominal / 7;
-      if (s.frequency === "MONTHLY") return sum + s.nominal / 30;
-      return sum;
-    }, 0);
+    .reduce((sum, s) => sum + s.nominal / Math.max(1, s.intervalDays), 0);
 }
 
-/** Total per minggu */
+/** Total nominal per minggu (7 hari) dari semua jadwal aktif. */
 export function computeWeeklyTotal(schedules: DcaSchedule[]): number {
-  return schedules
-    .filter((s) => s.status === "ACTIVE")
-    .reduce((sum, s) => {
-      if (s.frequency === "DAILY") return sum + s.nominal * 7;
-      if (s.frequency === "WEEKLY") return sum + s.nominal;
-      if (s.frequency === "MONTHLY") return sum + (s.nominal * 7) / 30;
-      return sum;
-    }, 0);
+  return computeDailyTotal(schedules) * 7;
 }
 
-/** Total per bulan */
+/** Total nominal per bulan (30 hari) dari semua jadwal aktif. */
 export function computeMonthlyTotal(schedules: DcaSchedule[]): number {
-  return schedules
-    .filter((s) => s.status === "ACTIVE")
-    .reduce((sum, s) => {
-      if (s.frequency === "DAILY") return sum + s.nominal * 30;
-      if (s.frequency === "WEEKLY") return sum + s.nominal * 4;
-      if (s.frequency === "MONTHLY") return sum + s.nominal;
-      return sum;
-    }, 0);
+  return computeDailyTotal(schedules) * 30;
 }
 
-/** Jadwal berikutnya dari semua jadwal aktif */
+/** Jadwal berikutnya dari semua jadwal aktif (yang paling cepat). */
 export function findNextSchedule(schedules: DcaSchedule[]): DcaSchedule | null {
   const active = schedules.filter((s) => s.status === "ACTIVE");
   if (!active.length) return null;
@@ -195,6 +175,7 @@ export function validateSchedule(
     nominal: number;
     startDate: string;
     executeTime: string;
+    intervalDays: number;
   },
   guardrails: DcaGuardrails
 ): ScheduleValidationError[] {
@@ -212,6 +193,10 @@ export function validateSchedule(
     });
   }
 
+  if (!Number.isInteger(values.intervalDays) || values.intervalDays < 1) {
+    errors.push({ field: "intervalDays", message: "Interval minimal 1 hari" });
+  }
+
   if (!values.startDate) {
     errors.push({ field: "startDate", message: "Tanggal mulai wajib diisi" });
   } else {
@@ -222,12 +207,9 @@ export function validateSchedule(
     }
 
     // Jika tanggal hari ini, cek apakah jam sudah lewat
-    if (
-      values.executeTime &&
-      startDateObj.getTime() === todayOnly.getTime()
-    ) {
-      const [hh, mm] = values.executeTime.split(":").map(Number);
-      const executeMinutes = hh * 60 + mm;
+    if (values.executeTime && startDateObj.getTime() === todayOnly.getTime()) {
+      const [hh, mmVal] = values.executeTime.split(":").map(Number);
+      const executeMinutes = hh * 60 + mmVal;
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
       if (executeMinutes <= nowMinutes) {
         errors.push({

@@ -1,12 +1,12 @@
 import type { DcaSchedule } from "../types";
 import {
-  FREQUENCY_LABELS,
   COIN_LABELS,
   BTC_COLOR,
   ETH_COLOR,
   formatRp,
   formatNextRun,
   formatDate,
+  intervalLabel,
 } from "../utils";
 
 function BitcoinIcon({ size = 18 }: { size?: number }) {
@@ -97,7 +97,7 @@ export function ScheduleCard({ schedule, onEdit, onDelete, onToggle }: Props) {
             border: `1px solid ${isActive ? "var(--border-strong)" : "var(--border)"}`,
           }}
         >
-          {FREQUENCY_LABELS[schedule.frequency]}
+          {intervalLabel(schedule.intervalDays)}
         </span>
         {/* Active/Inactive badge */}
         <span

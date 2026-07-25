@@ -1,5 +1,4 @@
 export type Coin = "BTC" | "ETH";
-export type Frequency = "DAILY" | "WEEKLY" | "MONTHLY";
 export type ScheduleStatus = "ACTIVE" | "INACTIVE";
 export type DcaHistoryStatus = "SUCCESS" | "FAILED" | "CANCELLED" | "SKIPPED";
 
@@ -12,7 +11,11 @@ export interface DcaSchedule {
   startDate: string;
   /** Format: HH:MM (24-hour) */
   executeTime: string;
-  frequency: Frequency;
+  /**
+   * Interval eksekusi dalam hari.
+   * 1 = setiap hari, 7 = setiap 7 hari, dst.
+   */
+  intervalDays: number;
   status: ScheduleStatus;
   createdAt: string;
   updatedAt: string;

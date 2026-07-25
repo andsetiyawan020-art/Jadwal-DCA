@@ -1,5 +1,6 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AutoDcaStorage } from "../services/AutoDcaStorage";
+import { DcaNotificationService } from "../services/DcaNotificationService";
 import type {
   DcaSchedule,
   DcaHistoryEntry,
@@ -23,6 +24,16 @@ export function useAutoDca() {
     AutoDcaStorage.getGuardrails()
   );
 
+  /** Re-jadwalkan notifikasi setiap kali daftar jadwal berubah (hanya jika notifikasi aktif). */
+  function syncNotifications(updatedSchedules: DcaSchedule[], updatedSettings?: DcaSettings) {
+    const activeSettings = updatedSettings ?? settings;
+    if (activeSettings.notificationsEnabled) {
+      DcaNotificationService.scheduleAll(updatedSchedules).catch(() => {});
+    } else {
+      DcaNotificationService.cancelAll().catch(() => {});
+    }
+  }
+
   // ── Schedules ─────────────────────────────────────────────────────────────
 
   const addSchedule = useCallback(
@@ -35,29 +46,47 @@ export function useAutoDca() {
         updatedAt: now,
       };
       AutoDcaStorage.addSchedule(schedule);
-      setSchedules(AutoDcaStorage.getSchedules());
+      const updated = AutoDcaStorage.getSchedules();
+      setSchedules(updated);
+      syncNotifications(updated);
     },
-    []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [settings]
   );
 
   const updateSchedule = useCallback(
     (id: string, updates: Partial<Omit<DcaSchedule, "id" | "createdAt">>) => {
       AutoDcaStorage.updateSchedule(id, updates);
-      setSchedules(AutoDcaStorage.getSchedules());
+      const updated = AutoDcaStorage.getSchedules();
+      setSchedules(updated);
+      syncNotifications(updated);
     },
-    []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [settings]
   );
 
-  const deleteSchedule = useCallback((id: string) => {
-    AutoDcaStorage.deleteSchedule(id);
-    setSchedules(AutoDcaStorage.getSchedules());
-  }, []);
+  const deleteSchedule = useCallback(
+    (id: string) => {
+      AutoDcaStorage.deleteSchedule(id);
+      const updated = AutoDcaStorage.getSchedules();
+      setSchedules(updated);
+      syncNotifications(updated);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [settings]
+  );
 
-  const toggleScheduleStatus = useCallback((id: string, currentStatus: ScheduleStatus) => {
-    const next: ScheduleStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
-    AutoDcaStorage.updateSchedule(id, { status: next });
-    setSchedules(AutoDcaStorage.getSchedules());
-  }, []);
+  const toggleScheduleStatus = useCallback(
+    (id: string, currentStatus: ScheduleStatus) => {
+      const next: ScheduleStatus = currentStatus === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+      AutoDcaStorage.updateSchedule(id, { status: next });
+      const updated = AutoDcaStorage.getSchedules();
+      setSchedules(updated);
+      syncNotifications(updated);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [settings]
+  );
 
   // ── History ───────────────────────────────────────────────────────────────
 
@@ -77,10 +106,16 @@ export function useAutoDca() {
 
   // ── Settings ──────────────────────────────────────────────────────────────
 
-  const saveSettings = useCallback((next: DcaSettings) => {
-    AutoDcaStorage.saveSettings(next);
-    setSettings(next);
-  }, []);
+  const saveSettings = useCallback(
+    (next: DcaSettings) => {
+      AutoDcaStorage.saveSettings(next);
+      setSettings(next);
+      // Re-sync notifikasi dengan settings baru
+      syncNotifications(schedules, next);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [schedules]
+  );
 
   // ── Guardrails ────────────────────────────────────────────────────────────
 

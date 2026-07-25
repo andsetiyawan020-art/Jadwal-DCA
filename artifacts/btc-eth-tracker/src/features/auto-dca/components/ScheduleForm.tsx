@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
-import type { DcaSchedule, Coin, Frequency } from "../types";
+import type { DcaSchedule, Coin } from "../types";
 import type { DcaGuardrails } from "../types";
 import {
   formatIdrInput,
   parseIdrInput,
   validateSchedule,
-  FREQUENCY_LABELS,
   BTC_COLOR,
   ETH_COLOR,
   ACCENT,
@@ -41,16 +40,25 @@ const errorStyle: React.CSSProperties = {
 
 interface FormValues {
   coin: Coin;
-  nominal: string;    // formatted with dots
+  nominal: string;       // formatted with dots
+  intervalDays: string;  // string agar input number bisa kosong sementara
   startDate: string;
   executeTime: string;
-  frequency: Frequency;
   status: "ACTIVE" | "INACTIVE";
 }
 
 function today(): string {
   return new Date().toISOString().split("T")[0];
 }
+
+/** Preset interval yang umum dipakai */
+const INTERVAL_PRESETS = [
+  { label: "1 hari", value: 1 },
+  { label: "3 hari", value: 3 },
+  { label: "7 hari", value: 7 },
+  { label: "14 hari", value: 14 },
+  { label: "30 hari", value: 30 },
+];
 
 interface Props {
   guardrails: DcaGuardrails;
@@ -65,33 +73,33 @@ export function ScheduleForm({ guardrails, editingSchedule, onSubmit, onCancel }
       return {
         coin: editingSchedule.coin,
         nominal: new Intl.NumberFormat("id-ID").format(editingSchedule.nominal),
+        intervalDays: String(editingSchedule.intervalDays),
         startDate: editingSchedule.startDate,
         executeTime: editingSchedule.executeTime,
-        frequency: editingSchedule.frequency,
         status: editingSchedule.status,
       };
     }
     return {
       coin: "BTC",
       nominal: "",
+      intervalDays: "7",
       startDate: today(),
       executeTime: "08:00",
-      frequency: "MONTHLY",
       status: "ACTIVE",
     };
   });
 
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  // Reset form when editingSchedule changes
+  // Reset form saat editingSchedule berubah
   useEffect(() => {
     if (editingSchedule) {
       setForm({
         coin: editingSchedule.coin,
         nominal: new Intl.NumberFormat("id-ID").format(editingSchedule.nominal),
+        intervalDays: String(editingSchedule.intervalDays),
         startDate: editingSchedule.startDate,
         executeTime: editingSchedule.executeTime,
-        frequency: editingSchedule.frequency,
         status: editingSchedule.status,
       });
     }
@@ -106,8 +114,15 @@ export function ScheduleForm({ guardrails, editingSchedule, onSubmit, onCancel }
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const nominalNum = parseIdrInput(form.nominal);
+    const intervalNum = parseInt(form.intervalDays, 10);
+
     const errors = validateSchedule(
-      { nominal: nominalNum, startDate: form.startDate, executeTime: form.executeTime },
+      {
+        nominal: nominalNum,
+        startDate: form.startDate,
+        executeTime: form.executeTime,
+        intervalDays: intervalNum,
+      },
       guardrails
     );
 
@@ -121,9 +136,9 @@ export function ScheduleForm({ guardrails, editingSchedule, onSubmit, onCancel }
     onSubmit({
       coin: form.coin,
       nominal: nominalNum,
+      intervalDays: intervalNum,
       startDate: form.startDate,
       executeTime: form.executeTime,
-      frequency: form.frequency,
       status: form.status,
     });
   }
@@ -169,6 +184,7 @@ export function ScheduleForm({ guardrails, editingSchedule, onSubmit, onCancel }
 
       <form onSubmit={handleSubmit}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+
           {/* Coin */}
           <div>
             <label style={labelStyle}>Coin</label>
@@ -182,20 +198,58 @@ export function ScheduleForm({ guardrails, editingSchedule, onSubmit, onCancel }
             </select>
           </div>
 
-          {/* Frekuensi */}
+          {/* Interval hari */}
           <div>
-            <label style={labelStyle}>Frekuensi</label>
-            <select
-              value={form.frequency}
-              onChange={(e) => setForm((f) => ({ ...f, frequency: e.target.value as Frequency }))}
-              style={inputStyle}
-            >
-              {(["DAILY", "WEEKLY", "MONTHLY"] as Frequency[]).map((f) => (
-                <option key={f} value={f}>
-                  {FREQUENCY_LABELS[f]}
-                </option>
-              ))}
-            </select>
+            <label style={labelStyle}>Interval (Hari)</label>
+            <input
+              type="number"
+              inputMode="numeric"
+              placeholder="7"
+              min="1"
+              step="1"
+              value={form.intervalDays}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, intervalDays: e.target.value }));
+                setFieldErrors((err) => ({ ...err, intervalDays: "" }));
+              }}
+              style={{
+                ...inputStyle,
+                borderColor: fieldErrors.intervalDays ? "#FF6B6B" : "var(--border-strong)",
+              }}
+            />
+            {fieldErrors.intervalDays && (
+              <div style={errorStyle}>{fieldErrors.intervalDays}</div>
+            )}
+            {/* Preset cepat */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.35rem", marginTop: "0.5rem" }}>
+              {INTERVAL_PRESETS.map((p) => {
+                const isSelected = form.intervalDays === String(p.value);
+                return (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => {
+                      setForm((f) => ({ ...f, intervalDays: String(p.value) }));
+                      setFieldErrors((err) => ({ ...err, intervalDays: "" }));
+                    }}
+                    style={{
+                      padding: "0.2rem 0.55rem",
+                      fontSize: "0.7rem",
+                      fontWeight: isSelected ? 700 : 500,
+                      borderRadius: "20px",
+                      border: `1px solid ${isSelected ? ACCENT : "var(--border-strong)"}`,
+                      background: isSelected ? "var(--accent-dim)" : "transparent",
+                      color: isSelected ? ACCENT : "var(--text-muted)",
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                      fontFamily: "'Space Grotesk', sans-serif",
+                    }}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Nominal */}
@@ -220,7 +274,7 @@ export function ScheduleForm({ guardrails, editingSchedule, onSubmit, onCancel }
             {guardrails.maxPerTransaction > 0 && (
               <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
                 Batas per transaksi:{" "}
-                <span style={{ color: "var(--accent)" }}>
+                <span style={{ color: ACCENT }}>
                   Rp {guardrails.maxPerTransaction.toLocaleString("id-ID")}
                 </span>
               </div>
@@ -236,7 +290,7 @@ export function ScheduleForm({ guardrails, editingSchedule, onSubmit, onCancel }
               min={today()}
               onChange={(e) => {
                 setForm((f) => ({ ...f, startDate: e.target.value }));
-                setFieldErrors((e2) => ({ ...e2, startDate: "" }));
+                setFieldErrors((err) => ({ ...err, startDate: "" }));
               }}
               style={{
                 ...inputStyle,
@@ -256,7 +310,7 @@ export function ScheduleForm({ guardrails, editingSchedule, onSubmit, onCancel }
               value={form.executeTime}
               onChange={(e) => {
                 setForm((f) => ({ ...f, executeTime: e.target.value }));
-                setFieldErrors((e2) => ({ ...e2, executeTime: "" }));
+                setFieldErrors((err) => ({ ...err, executeTime: "" }));
               }}
               style={{
                 ...inputStyle,
@@ -268,7 +322,7 @@ export function ScheduleForm({ guardrails, editingSchedule, onSubmit, onCancel }
             {fieldErrors.executeTime && <div style={errorStyle}>{fieldErrors.executeTime}</div>}
           </div>
 
-          {/* Status */}
+          {/* Status awal */}
           <div style={{ gridColumn: "1 / -1" }}>
             <label style={labelStyle}>Status Awal</label>
             <div style={{ display: "flex", gap: "0.75rem" }}>
@@ -281,7 +335,7 @@ export function ScheduleForm({ guardrails, editingSchedule, onSubmit, onCancel }
                     gap: "0.5rem",
                     cursor: "pointer",
                     fontSize: "0.88rem",
-                    color: form.status === s ? "var(--accent)" : "var(--text-muted)",
+                    color: form.status === s ? ACCENT : "var(--text-muted)",
                     fontWeight: form.status === s ? 600 : 400,
                   }}
                 >
@@ -306,7 +360,7 @@ export function ScheduleForm({ guardrails, editingSchedule, onSubmit, onCancel }
             style={{
               flex: 1,
               padding: "0.75rem",
-              background: "var(--accent)",
+              background: ACCENT,
               color: "#0A192F",
               border: "none",
               borderRadius: "8px",

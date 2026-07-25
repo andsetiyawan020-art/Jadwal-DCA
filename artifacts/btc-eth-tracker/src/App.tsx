@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { AutoDcaPage } from "./features/auto-dca/pages/AutoDcaPage";
+import { DcaNotificationService } from "./features/auto-dca/services/DcaNotificationService";
 import { apiGetJson } from "./lib/httpClient";
 import { Capacitor } from "@capacitor/core";
 import { FileSaver } from "./lib/FileSaver";
@@ -2119,9 +2120,22 @@ function DashboardTab({ transactions, onImport }: { transactions: Transaction[];
 }
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabType>("BTC");
+  // Cek apakah ada pending navigation dari tap notifikasi (app dimatikan, lalu dibuka via notif)
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    const pending = DcaNotificationService.consumePendingNav();
+    if (pending === "AutoDCA") return "AutoDCA";
+    return "BTC";
+  });
   const [showSettings, setShowSettings] = useState(false);
   const [showIndodaxApi, setShowIndodaxApi] = useState(false);
+
+  // Handle tap notifikasi saat app masih berjalan (foreground / background)
+  useEffect(() => {
+    const cleanup = DcaNotificationService.listenForTap(() => {
+      setActiveTab("AutoDCA");
+    });
+    return cleanup;
+  }, []);
 
   // Local state backed by LocalStorage for immediate UI response and offline support
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
