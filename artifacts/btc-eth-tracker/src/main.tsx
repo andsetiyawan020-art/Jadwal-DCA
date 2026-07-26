@@ -2,15 +2,8 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Capacitor } from "@capacitor/core";
 import { setBaseUrl } from "@workspace/api-client-react";
-import { DcaNotificationService } from "./features/auto-dca/services/DcaNotificationService";
 import App from "./App";
 import "./index.css";
-
-// Minta izin notifikasi saat pertama buka app.
-// - Native (APK): memunculkan dialog POST_NOTIFICATIONS (Android 13+).
-// - Web: memunculkan permission prompt browser jika belum pernah diminta.
-// Dilakukan tanpa menunggu agar tidak menghambat render utama.
-DcaNotificationService.requestPermission().catch(() => {});
 
 if (Capacitor.isNativePlatform()) {
   const apiOrigin = import.meta.env.VITE_API_ORIGIN as string | undefined;

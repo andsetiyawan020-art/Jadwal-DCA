@@ -1,6 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { AutoDcaPage } from "./features/auto-dca/pages/AutoDcaPage";
-import { DcaNotificationService } from "./features/auto-dca/services/DcaNotificationService";
 import { apiGetJson } from "./lib/httpClient";
 import { Capacitor } from "@capacitor/core";
 import { FileSaver } from "./lib/FileSaver";
@@ -181,9 +179,9 @@ function indodaxTransactionId(t: IndodaxPreviewTransaction): string {
   return `indodax:${t.tradeId || `${t.orderId}-${t.date}`}`;
 }
 
-type TabType = "BTC" | "ETH" | "Dashboard" | "AutoDCA";
+type TabType = "BTC" | "ETH" | "Dashboard";
 
-const tabs: TabType[] = ["BTC", "ETH", "Dashboard", "AutoDCA"];
+const tabs: TabType[] = ["BTC", "ETH", "Dashboard"];
 
 const BTC_COLOR = "#F7931A";
 const ETH_COLOR = "#627EEA";
@@ -2120,22 +2118,9 @@ function DashboardTab({ transactions, onImport }: { transactions: Transaction[];
 }
 
 export default function App() {
-  // Cek apakah ada pending navigation dari tap notifikasi (app dimatikan, lalu dibuka via notif)
-  const [activeTab, setActiveTab] = useState<TabType>(() => {
-    const pending = DcaNotificationService.consumePendingNav();
-    if (pending === "AutoDCA") return "AutoDCA";
-    return "BTC";
-  });
+  const [activeTab, setActiveTab] = useState<TabType>("BTC");
   const [showSettings, setShowSettings] = useState(false);
   const [showIndodaxApi, setShowIndodaxApi] = useState(false);
-
-  // Handle tap notifikasi saat app masih berjalan (foreground / background)
-  useEffect(() => {
-    const cleanup = DcaNotificationService.listenForTap(() => {
-      setActiveTab("AutoDCA");
-    });
-    return cleanup;
-  }, []);
 
   // Local state backed by LocalStorage for immediate UI response and offline support
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
@@ -2449,8 +2434,7 @@ export default function App() {
                   {tab === "BTC" && <BitcoinIcon size={14} />}
                   {tab === "ETH" && <EthereumIcon size={14} />}
                   {tab === "Dashboard" && <TrendUpIcon size={14} />}
-                  {tab === "AutoDCA" && <CodeIcon size={14} />}
-                  {tab === "AutoDCA" ? "Auto DCA" : tab}
+                  {tab}
                 </button>
               );
             })}
@@ -2474,11 +2458,7 @@ export default function App() {
         {activeTab === "Dashboard" && (
           <DashboardTab transactions={transactions} onImport={setTransactions} />
         )}
-        {activeTab === "AutoDCA" && (
-          <div className="fade-in">
-            <AutoDcaPage />
-          </div>
-        )}
+
       </main>
 
       {showSettings && (
