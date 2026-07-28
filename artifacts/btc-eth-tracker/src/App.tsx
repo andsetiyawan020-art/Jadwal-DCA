@@ -179,9 +179,7 @@ function indodaxTransactionId(t: IndodaxPreviewTransaction): string {
   return `indodax:${t.tradeId || `${t.orderId}-${t.date}`}`;
 }
 
-type TabType = "BTC" | "ETH" | "Dashboard";
-
-const tabs: TabType[] = ["BTC", "ETH", "Dashboard"];
+type TabType = "Dashboard" | "BTC" | "ETH" | "Settings";
 
 const BTC_COLOR = "#F7931A";
 const ETH_COLOR = "#627EEA";
@@ -2117,9 +2115,208 @@ function DashboardTab({ transactions, onImport }: { transactions: Transaction[];
   );
 }
 
+// ── Bottom Navigation ─────────────────────────────────────────────────────────
+
+function BottomNav({
+  activeTab,
+  onTabChange,
+}: {
+  activeTab: TabType;
+  onTabChange: (tab: TabType) => void;
+}) {
+  const items: { tab: TabType; label: string; icon: React.ReactNode }[] = [
+    { tab: "Dashboard", label: "Dashboard", icon: <TrendUpIcon size={22} /> },
+    { tab: "BTC",       label: "BTC",       icon: <BitcoinIcon  size={22} /> },
+    { tab: "ETH",       label: "ETH",       icon: <EthereumIcon size={22} /> },
+    { tab: "Settings",  label: "Pengaturan", icon: <SettingsIcon size={22} /> },
+  ];
+
+  return (
+    <nav
+      style={{
+        position: "fixed",
+        bottom: 0, left: 0, right: 0,
+        background: "rgba(10,25,47,0.97)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        borderTop: "1px solid var(--border)",
+        display: "flex",
+        zIndex: 200,
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      }}
+    >
+      {items.map(({ tab, label, icon }) => {
+        const isActive = activeTab === tab;
+        const color =
+          tab === "BTC" ? BTC_COLOR :
+          tab === "ETH" ? ETH_COLOR :
+          ACCENT;
+        return (
+          <button
+            key={tab}
+            onClick={() => onTabChange(tab)}
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "0.2rem",
+              padding: "0.6rem 0 0.55rem",
+              background: "none",
+              border: "none",
+              color: isActive ? color : "var(--text-muted)",
+              cursor: "pointer",
+              fontSize: "0.62rem",
+              letterSpacing: "0.02em",
+              fontFamily: "'Space Grotesk', sans-serif",
+              fontWeight: isActive ? 700 : 500,
+              transition: "color 0.18s",
+              position: "relative",
+            }}
+          >
+            {/* Indikator garis atas */}
+            <span
+              style={{
+                position: "absolute",
+                top: 0,
+                left: "20%", right: "20%",
+                height: "2px",
+                background: isActive ? color : "transparent",
+                borderRadius: "0 0 3px 3px",
+                transition: "background 0.18s",
+              }}
+            />
+            {icon}
+            <span>{label}</span>
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+// ── Settings Tab (inline, tanpa modal overlay) ────────────────────────────────
+
+function SettingsTab({ onOpenIndodaxApi }: { onOpenIndodaxApi: () => void }) {
+  const [bioEnabled, setBioEnabled] = useState(false);
+  const isNative = Capacitor.isNativePlatform();
+
+  useEffect(() => {
+    if (isNative) {
+      BiometricAuth.isBiometricEnabled().then(res => setBioEnabled(res.enabled));
+    }
+  }, [isNative]);
+
+  const toggleBiometric = async (checked: boolean) => {
+    if (!isNative) {
+      toast.info("Fitur sidik jari hanya tersedia di Android");
+      return;
+    }
+    try {
+      await BiometricAuth.setBiometricEnabled({ enabled: checked });
+      setBioEnabled(checked);
+      toast.success(checked ? "Kunci sidik jari aktif" : "Kunci sidik jari dimatikan");
+    } catch {
+      toast.error("Gagal mengubah pengaturan keamanan");
+    }
+  };
+
+  const rowStyle: React.CSSProperties = {
+    width: "100%",
+    display: "flex", alignItems: "center", gap: "0.75rem",
+    padding: "0.85rem 1rem",
+    background: "var(--bg-2)",
+    border: "1px solid var(--border-strong)",
+    borderRadius: "10px",
+    color: "var(--text)",
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontWeight: 600, fontSize: "0.9rem",
+    textAlign: "left",
+    marginBottom: "0.75rem",
+  };
+
+  return (
+    <div className="fade-in" style={{ paddingTop: "0.5rem" }}>
+      <h2 style={{
+        fontSize: "0.78rem", fontWeight: 600,
+        color: "var(--text-muted)", textTransform: "uppercase",
+        letterSpacing: "0.06em", marginBottom: "1rem",
+      }}>
+        Pengaturan
+      </h2>
+
+      {/* API Indodax */}
+      <button
+        onClick={onOpenIndodaxApi}
+        style={{ ...rowStyle, cursor: "pointer" }}
+        onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.3)"; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border-strong)"; }}
+      >
+        <span style={{
+          width: "34px", height: "34px", borderRadius: "8px",
+          background: "rgba(0,196,255,0.12)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "#00C4FF", flexShrink: 0,
+        }}>
+          <KeyIcon size={17} />
+        </span>
+        <span style={{ flex: 1 }}>
+          <span style={{ display: "block" }}>API Indodax</span>
+          <span style={{ display: "block", fontSize: "0.75rem", fontWeight: 400, color: "var(--text-muted)", marginTop: "0.15rem" }}>
+            Kelola API Key &amp; Secret Key Indodax
+          </span>
+        </span>
+      </button>
+
+      {/* Toggle Biometrik */}
+      <div style={rowStyle}>
+        <span style={{
+          width: "34px", height: "34px", borderRadius: "8px",
+          background: "rgba(100,255,218,0.1)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "var(--accent)", flexShrink: 0,
+        }}>
+          <FingerprintIcon size={18} />
+        </span>
+        <span style={{ flex: 1 }}>
+          <span style={{ display: "block" }}>Kunci Sidik Jari</span>
+          <span style={{ display: "block", fontSize: "0.75rem", fontWeight: 400, color: "var(--text-muted)", marginTop: "0.15rem" }}>
+            Amankan akses aplikasi
+          </span>
+        </span>
+        <label style={{ cursor: "pointer" }}>
+          <input
+            type="checkbox"
+            checked={bioEnabled}
+            onChange={(e) => toggleBiometric(e.target.checked)}
+            style={{ display: "none" }}
+          />
+          <div style={{
+            width: "40px", height: "20px",
+            background: bioEnabled ? "var(--accent)" : "var(--border-strong)",
+            borderRadius: "20px",
+            position: "relative",
+            transition: "all 0.2s",
+          }}>
+            <div style={{
+              width: "16px", height: "16px",
+              background: "#fff",
+              borderRadius: "50%",
+              position: "absolute",
+              top: "2px",
+              left: bioEnabled ? "22px" : "2px",
+              transition: "all 0.2s",
+            }} />
+          </div>
+        </label>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
-  const [activeTab, setActiveTab] = useState<TabType>("BTC");
-  const [showSettings, setShowSettings] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>("Dashboard");
   const [showIndodaxApi, setShowIndodaxApi] = useState(false);
 
   // Local state backed by LocalStorage for immediate UI response and offline support
@@ -2324,7 +2521,7 @@ export default function App() {
       minHeight: "100dvh",
       background: "var(--bg)",
       backgroundImage: "radial-gradient(ellipse at 20% 0%, rgba(100,255,218,0.04) 0%, transparent 60%), radial-gradient(ellipse at 80% 100%, rgba(98,126,234,0.04) 0%, transparent 60%)",
-      paddingBottom: "2rem",
+      paddingBottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))",
     }}>
       <header style={{
         borderBottom: "1px solid var(--border)",
@@ -2336,7 +2533,7 @@ export default function App() {
         zIndex: 100,
       }}>
         <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 1rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", paddingTop: "1rem", paddingBottom: "0.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", paddingTop: "0.85rem", paddingBottom: "0.85rem" }}>
             <div style={{
               width: "36px", height: "36px", borderRadius: "10px",
               overflow: "hidden",
@@ -2355,94 +2552,34 @@ export default function App() {
                 Investment Tracker
               </p>
             </div>
-            <div style={{ marginLeft: "auto", display: "flex", gap: "0.4rem" }}>
-              <div style={{
-                background: "var(--btc-dim)",
-                border: "1px solid rgba(247,147,26,0.3)",
-                borderRadius: "20px", padding: "0.2rem 0.6rem",
-                fontSize: "0.72rem", fontWeight: 700, color: BTC_COLOR,
-              }}>₿ BTC</div>
-              <div style={{
-                background: "var(--eth-dim)",
-                border: "1px solid rgba(98,126,234,0.3)",
-                borderRadius: "20px", padding: "0.2rem 0.6rem",
-                fontSize: "0.72rem", fontWeight: 700, color: ETH_COLOR,
-              }}>Ξ ETH</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
-                <button
-                  onClick={() => setShowSettings(true)}
-                  aria-label="Pengaturan"
-                  title="Pengaturan"
-                  style={{
-                    background: "var(--bg-2)",
-                    border: "1px solid var(--border-strong)",
-                    borderRadius: "20px",
-                    width: "28px", height: "28px",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "var(--text-muted)",
-                    cursor: "pointer",
-                  }}
-                >
-                  <SettingsIcon size={15} />
-                </button>
-                <button
-                  onClick={handleFastSync}
-                  disabled={isFastSyncing}
-                  aria-label="Sinkron Cepat"
-                  title="Sinkron Cepat"
-                  style={{
-                    background: "var(--accent-dim)",
-                    border: "1px solid var(--border-strong)",
-                    borderRadius: "20px",
-                    width: "28px", height: "28px",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "var(--accent)",
-                    cursor: isFastSyncing ? "not-allowed" : "pointer",
-                    opacity: isFastSyncing ? 0.7 : 1,
-                  }}
-                >
-                  <RefreshIcon size={14} spinning={isFastSyncing} />
-                </button>
-              </div>
+            <div style={{ marginLeft: "auto" }}>
+              <button
+                onClick={handleFastSync}
+                disabled={isFastSyncing}
+                aria-label="Sinkron Cepat"
+                title="Sinkron Cepat"
+                style={{
+                  background: "var(--accent-dim)",
+                  border: "1px solid var(--border-strong)",
+                  borderRadius: "20px",
+                  width: "32px", height: "32px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "var(--accent)",
+                  cursor: isFastSyncing ? "not-allowed" : "pointer",
+                  opacity: isFastSyncing ? 0.7 : 1,
+                }}
+              >
+                <RefreshIcon size={15} spinning={isFastSyncing} />
+              </button>
             </div>
           </div>
-          <nav style={{ display: "flex", gap: 0 }}>
-            {tabs.map(tab => {
-              const isActive = activeTab === tab;
-              const tabColor = tab === "BTC" ? BTC_COLOR : tab === "ETH" ? ETH_COLOR : ACCENT;
-              return (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  style={{
-                    padding: "0.6rem 1.25rem",
-                    background: "none",
-                    border: "none",
-                    borderBottom: isActive ? `2px solid ${tabColor}` : "2px solid transparent",
-                    color: isActive ? tabColor : "var(--text-muted)",
-                    fontFamily: "'Space Grotesk', sans-serif",
-                    fontWeight: isActive ? 700 : 500,
-                    fontSize: "0.88rem",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.4rem",
-                    textShadow: isActive && tab !== "Dashboard" ? (tab === "BTC" ? "0 0 10px rgba(247,147,26,0.4)" : "0 0 10px rgba(98,126,234,0.4)") : "none",
-                  }}
-                >
-                  {tab === "BTC" && <BitcoinIcon size={14} />}
-                  {tab === "ETH" && <EthereumIcon size={14} />}
-                  {tab === "Dashboard" && <TrendUpIcon size={14} />}
-                  {tab}
-                </button>
-              );
-            })}
-          </nav>
         </div>
       </header>
 
       <main style={{ maxWidth: "900px", margin: "0 auto", padding: "1.5rem 1rem 0" }}>
+        {activeTab === "Dashboard" && (
+          <DashboardTab transactions={transactions} onImport={setTransactions} />
+        )}
         {(activeTab === "BTC" || activeTab === "ETH") && (
           <div className="fade-in">
             <CoinSummaryCard coin={activeTab} transactions={activeTab === "BTC" ? btcTx : ethTx} />
@@ -2455,21 +2592,12 @@ export default function App() {
             </div>
           </div>
         )}
-        {activeTab === "Dashboard" && (
-          <DashboardTab transactions={transactions} onImport={setTransactions} />
+        {activeTab === "Settings" && (
+          <SettingsTab onOpenIndodaxApi={() => setShowIndodaxApi(true)} />
         )}
-
       </main>
 
-      {showSettings && (
-        <SettingsDialog
-          onClose={() => setShowSettings(false)}
-          onOpenIndodaxApi={() => {
-            setShowSettings(false);
-            setShowIndodaxApi(true);
-          }}
-        />
-      )}
+      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
 
       {showIndodaxApi && (
         <IndodaxApiDialog
