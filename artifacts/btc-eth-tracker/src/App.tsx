@@ -2533,7 +2533,8 @@ export default function App() {
         zIndex: 100,
       }}>
         <div style={{ maxWidth: "900px", margin: "0 auto", padding: "0 1rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", paddingTop: "0.85rem", paddingBottom: "0.85rem" }}>
+          <div style={{ display: "flex", alignItems: "center", paddingTop: "0.85rem", paddingBottom: "0.85rem", position: "relative" }}>
+            {/* Kiri: Logo */}
             <div style={{
               width: "36px", height: "36px", borderRadius: "10px",
               overflow: "hidden",
@@ -2544,16 +2545,24 @@ export default function App() {
               <img src="/app-logo.png" alt="Logo"
                 style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
             </div>
+
+            {/* Tengah: Judul — di-absolute agar benar-benar center terhadap seluruh header */}
             <h1 style={{
+              position: "absolute",
+              left: "50%",
+              transform: "translateX(-50%)",
               fontSize: "1.25rem",
               fontWeight: 700,
               color: "#ffffff",
               lineHeight: 1,
-              marginLeft: "1.25rem",
+              whiteSpace: "nowrap",
               fontFamily: "'Space Grotesk', sans-serif",
+              pointerEvents: "none",
             }}>
               DCA BTC &amp; ETH
             </h1>
+
+            {/* Kanan: Tombol Refresh */}
             <div style={{ marginLeft: "auto" }}>
               <button
                 onClick={handleFastSync}
