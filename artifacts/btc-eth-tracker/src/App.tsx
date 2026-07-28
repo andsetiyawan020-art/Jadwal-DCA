@@ -2544,14 +2544,16 @@ export default function App() {
               <img src="/app-logo.png" alt="Logo"
                 style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
             </div>
-            <div>
-              <h1 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--text)", lineHeight: 1.2 }}>
-                Aset Coin
-              </h1>
-              <p style={{ fontSize: "0.72rem", color: "var(--text-muted)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-                Investment Tracker
-              </p>
-            </div>
+            <h1 style={{
+              fontSize: "1.25rem",
+              fontWeight: 700,
+              color: "#ffffff",
+              lineHeight: 1,
+              marginLeft: "0.25rem",
+              fontFamily: "'Space Grotesk', sans-serif",
+            }}>
+              DCA BTC &amp; ETH
+            </h1>
             <div style={{ marginLeft: "auto" }}>
               <button
                 onClick={handleFastSync}
