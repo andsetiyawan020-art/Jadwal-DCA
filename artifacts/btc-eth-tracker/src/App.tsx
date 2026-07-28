@@ -2549,7 +2549,7 @@ export default function App() {
               fontWeight: 700,
               color: "#ffffff",
               lineHeight: 1,
-              marginLeft: "0.25rem",
+              marginLeft: "1.25rem",
               fontFamily: "'Space Grotesk', sans-serif",
             }}>
               DCA BTC &amp; ETH
